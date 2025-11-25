@@ -23,10 +23,16 @@ const client = new MongoClient(uri, {
 });
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
 
         const db = client.db('cyber_it');
         const courseCollection = db.collection('course');
+
+        app.post('/course', async (req, res) => {
+            const newCourse = req.body;
+            const result = await courseCollection.insertOne(newCourse);
+            res.send(result)
+        })
 
         app.get('/course', async (req, res) => {
             const email = req.query.email;
@@ -41,8 +47,27 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/course/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await courseCollection.findOne(query);
+            res.send(result)
+        })
 
-        await client.db("admin").command({ ping: 1 });
+        app.delete('/course/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await courseCollection.deleteOne(query);
+
+            if (result.deletedCount > 0) {
+                res.send({ success: true, message: "Course deleted" });
+            } else {
+                res.send({ success: false, message: "Course not found" });
+            }
+        });
+
+
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
